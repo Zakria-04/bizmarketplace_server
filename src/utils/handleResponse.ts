@@ -1,16 +1,24 @@
-import { Request, Response } from "express";
+import type { Response } from "express";
 
-const handleResponse = <T>(
+type ResponseOptions<T> = {
+  data?: T | null;
+  errorCode?: string;
+};
+
+const handleResponse = <T = unknown>(
   res: Response,
   status: number,
   message: string,
-  data?: T | null,
+  options: ResponseOptions<T> = {},
 ) => {
-  res.status(status).json({
+  const { data, errorCode } = options;
+
+  return res.status(status).json({
     status,
-    success: status < 400,
+    success: status >= 200 && status < 300,
     message,
-    data,
+    ...(errorCode && { errorCode }),
+    ...(data !== undefined && { data }),
   });
 };
 

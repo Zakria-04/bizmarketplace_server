@@ -70,13 +70,17 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     const user = await USER_MODEL.findOne({ email });
 
     if (!user) {
-      return handleResponse(res, 400, "Invalid email or password");
+      return handleResponse(res, 400, "Invalid email or password", {
+        errorCode: "AUTH_INVALID_CREDENTIALS",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return handleResponse(res, 400, "Invalid email or password");
+      return handleResponse(res, 400, "Invalid email or password", {
+        errorCode: "AUTH_INVALID_CREDENTIALS",
+      });
     }
 
     // generate tokens
