@@ -2,15 +2,12 @@ import { model, Schema } from "mongoose";
 import { UserModelType } from "../../types/user.type";
 
 const userSchema = new Schema<UserModelType>({
-  firstName: {
+  fullName: {
     type: String,
-    required: true,
+    required: [true, "Full name is required"],
     trim: true,
-  },
-  lastName: {
-    type: String,
-    trim: true,
-    default: null,
+    minlength: [2, "Full name must contain at least 2 characters"],
+    maxlength: [100, "Full name cannot exceed 100 characters"],
   },
   email: {
     type: String,
@@ -29,6 +26,11 @@ const userSchema = new Schema<UserModelType>({
   profilePicture: {
     type: String,
     default: null,
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   authProvider: {
     type: String,

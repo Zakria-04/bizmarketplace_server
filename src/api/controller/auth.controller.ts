@@ -8,11 +8,12 @@ import {
   generateAccessToken,
   generateRefreshToken,
   REFRESH_TOKEN_MAX_AGE,
+  verifyRefreshToken,
 } from "../../utils/jwt";
 import REFRESH_TOKEN_MODEL from "../model/refreshToken.model";
 
 const register = async (req: Request, res: Response, next: NextFunction) => {
-  const { email, password, firstName, lastName } = req.body as UserModelType;
+  const { email, password, fullName } = req.body as UserModelType;
   try {
     const existingUser = await USER_MODEL.findOne({ email });
 
@@ -22,8 +23,7 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await USER_MODEL.create({
-      firstName,
-      lastName,
+      fullName: fullName.trim(),
       email: email.trim().toLowerCase(),
       password: hashedPassword,
     });
@@ -31,8 +31,7 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
     // generate tokens
     const payload = {
       _id: newUser._id,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
+      fullName: newUser.fullName,
       email: newUser.email,
     };
 
@@ -83,8 +82,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     // generate tokens
     const payload = {
       _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      fullName: user.fullName,
       email: user.email,
     };
 
@@ -117,4 +115,47 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { register, login };
+const refreshAccessToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  try {
+    if (!refreshToken) {
+      return handleResponse(res, 401, "Refresh token required");
+    }
+
+    const storedToken = await REFRESH_TOKEN_MODEL.findOne({
+      token: refreshToken,
+    });
+
+    if (!storedToken) {
+      return handleResponse(res, 403, "Invalid refresh token");
+    }
+
+    const decoded = verifyRefreshToken(refreshToken) as UserModelType;
+
+    const payload = {
+      _id: decoded._id,
+      fullName: decoded.fullName,
+      email: decoded.email,
+    };
+
+    const newAccessToken = generateAccessToken(payload);
+
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+
+    handleResponse(res, 200, "Access token refreshed");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { register, login, refreshAccessToken };
