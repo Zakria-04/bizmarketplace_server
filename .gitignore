@@ -1,0 +1,19 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Logs
+*.log
+yarn-error.log*
+
+# System files
+.DS_Store
+Thumbs.db
