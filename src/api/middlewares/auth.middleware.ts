@@ -5,7 +5,7 @@ import { verifyAccessToken } from "../../utils/jwt";
 declare global {
   namespace Express {
     interface Request {
-      authUser?: UserModelType;
+      authUser: UserModelType;
     }
   }
 }
