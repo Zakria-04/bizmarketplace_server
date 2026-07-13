@@ -1,16 +1,19 @@
 import { model, Schema } from "mongoose";
 import { ListingModelType } from "../../types/listing.type";
 
-const listingImageSchema = new Schema({
-  url: {
-    type: String,
-    required: true,
+const listingImageSchema = new Schema(
+  {
+    url: {
+      type: String,
+      required: true,
+    },
+    publicId: {
+      type: String,
+      required: true,
+    },
   },
-  publicId: {
-    type: String,
-    required: true,
-  },
-});
+  { _id: false },
+);
 
 const listingSchema = new Schema<ListingModelType>(
   {
