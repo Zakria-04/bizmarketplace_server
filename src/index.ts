@@ -5,8 +5,13 @@ import dotenv from "dotenv";
 import errorHandling from "./api/middlewares/errorHandler.middleware";
 import Routes from "./api/routes/Routes";
 import mongoose from "mongoose";
+import { setServers } from "node:dns";
 
 dotenv.config();
+
+// if (process.platform === "win32" && process.env.NODE_ENV !== "production") {
+//   setServers(["8.8.8.8", "8.8.4.4"]); //! You can uncomment this if you are facing DNS resolution issues on Windows in development mode.
+// }
 const app = express();
 
 app.use(cookieParser());

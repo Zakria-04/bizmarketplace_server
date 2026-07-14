@@ -6,7 +6,9 @@ import handleResponse from "../../utils/handleResponse";
 import {
   deleteCloudinaryImage,
   streamUpload,
+  UploadedImage,
 } from "../services/cloudinary.service";
+import { Types } from "mongoose";
 
 const createNewListing = async (
   req: Request,
@@ -88,36 +90,102 @@ const createNewListing = async (
   }
 };
 
-export default createNewListing;
-
 const updateListing = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const { listingId } = req.params;
-  const { title, description, tags, primaryCta, links } =
-    req.body as ListingModelType;
-  const owner = req?.authUser?._id;
+  const listingId = req.params.listingId;
+  const owner = req.authUser?._id;
+
+  let newImagePublicId: string | undefined;
 
   try {
-    // Check if the listing exists and belongs to the authenticated user
-    const listing = await Listing_MODEL.findById(listingId);
-    if (!listing || listing.owner.toString() !== owner?.toString()) {
+    if (!owner) {
+      return handleResponse(res, 401, "Unauthorized", {
+        errorCode: "UNAUTHORIZED",
+      });
+    }
+
+    if (typeof listingId !== "string" || !Types.ObjectId.isValid(listingId)) {
+      return handleResponse(res, 400, "Invalid listing ID", {
+        errorCode: "INVALID_LISTING_ID",
+      });
+    }
+
+    const listingFilter = {
+      _id: new Types.ObjectId(listingId),
+      owner,
+    };
+
+    const listing = await Listing_MODEL.findOne(listingFilter).select("images");
+
+    if (!listing) {
       return handleResponse(res, 404, "Listing not found or unauthorized", {
         errorCode: "LISTING_NOT_FOUND",
       });
     }
 
-    const updatedListing = await Listing_MODEL.findByIdAndUpdate(
-      listingId,
-      { title, description, tags, primaryCta, links },
-      { new: true },
+    const { title, description, tags, primaryCta, links } = req.body ?? {};
+
+    const imageBuffer = req.file?.buffer;
+
+    const uploadedImage = imageBuffer
+      ? await streamUpload(imageBuffer, "listing_images")
+      : undefined;
+
+    newImagePublicId = uploadedImage?.publicId;
+
+    const oldImagePublicId = uploadedImage
+      ? listing.images[0]?.publicId
+      : undefined;
+
+    const updatedListing = await Listing_MODEL.findOneAndUpdate(
+      listingFilter,
+      {
+        $set: {
+          title,
+          description,
+          tags,
+          primaryCta,
+          links,
+          ...(uploadedImage && {
+            images: [uploadedImage],
+          }),
+        },
+      },
+      {
+        returnDocument: "after",
+        runValidators: true,
+      },
     );
+
+    if (!updatedListing) {
+      throw new Error("Listing disappeared while being updated");
+    }
+
+    // The new image is now connected to the saved listing.
+    newImagePublicId = undefined;
+
+    if (oldImagePublicId) {
+      await deleteCloudinaryImage(oldImagePublicId).catch((cleanupError) => {
+        console.error("Failed to delete old Cloudinary image:", cleanupError);
+      });
+    }
+
     return handleResponse(res, 200, "Listing updated successfully", {
       data: updatedListing,
     });
   } catch (error) {
+    if (newImagePublicId) {
+      await deleteCloudinaryImage(newImagePublicId).catch((cleanupError) => {
+        console.error(
+          "Failed to delete unused Cloudinary image:",
+          cleanupError,
+        );
+      });
+    }
+
     next(error);
   }
 };

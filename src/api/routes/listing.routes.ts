@@ -14,9 +14,10 @@ listingRouter.post(
   upload.single("image"),
   createNewListing,
 );
-listingRouter.put(
+listingRouter.patch(
   "/updateListing/:listingId",
   authenticateToken,
+  upload.single("image"),
   updateListing,
 );
 
