@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createNewListing,
+  getAllListings,
   updateListing,
 } from "../controller/listing.controller";
 import { authenticateToken } from "../middlewares/auth.middleware";
@@ -20,5 +21,6 @@ listingRouter.patch(
   upload.single("image"),
   updateListing,
 );
+listingRouter.get("/getAllListings", getAllListings);
 
 export default listingRouter;

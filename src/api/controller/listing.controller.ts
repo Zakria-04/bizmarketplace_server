@@ -190,4 +190,19 @@ const updateListing = async (
   }
 };
 
-export { createNewListing, updateListing };
+const getAllListings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const listings = await Listing_MODEL.find();
+    return handleResponse(res, 200, "Listings retrieved successfully", {
+      data: listings,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { createNewListing, updateListing, getAllListings };
