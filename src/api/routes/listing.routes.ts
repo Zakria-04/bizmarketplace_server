@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createNewListing,
+  deleteListing,
   getAllListings,
   getUserListings,
   updateListing,
@@ -24,5 +25,6 @@ listingRouter.patch(
 );
 listingRouter.get("/getAllListings", getAllListings);
 listingRouter.get("/getUserListings", authenticateToken, getUserListings);
+listingRouter.delete("/deleteListing/:id", authenticateToken, deleteListing);
 
 export default listingRouter;

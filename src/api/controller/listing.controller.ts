@@ -54,12 +54,16 @@ const createNewListing = async (
 
     uploadedPublicId = uploadedImage.publicId;
 
+    // parse the tags and links
+    const parsedTags = typeof tags === "string" ? JSON.parse(tags) : tags;
+    const parsedLinks = typeof links === "string" ? JSON.parse(links) : links;
+
     const newListing = new Listing_MODEL({
       owner,
       title,
       description,
-      tags,
-      links,
+      tags: parsedTags,
+      links: parsedLinks,
       primaryCta,
     });
 
@@ -141,15 +145,19 @@ const updateListing = async (
       ? listing.images[0]?.publicId
       : undefined;
 
+    // parse the tags and links if they are strings
+    const parsedTags = typeof tags === "string" ? JSON.parse(tags) : tags;
+    const parsedLinks = typeof links === "string" ? JSON.parse(links) : links;
+
     const updatedListing = await Listing_MODEL.findOneAndUpdate(
       listingFilter,
       {
         $set: {
           title,
           description,
-          tags,
+          tags: parsedTags,
           primaryCta,
-          links,
+          links: parsedLinks,
           ...(uploadedImage && {
             images: [uploadedImage],
           }),
@@ -225,4 +233,36 @@ const getUserListings = async (
   }
 };
 
-export { createNewListing, updateListing, getAllListings, getUserListings };
+const deleteListing = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const listingId = req.params.id;
+  try {
+    const deletedListing = await Listing_MODEL.findByIdAndDelete(listingId);
+    if (!deletedListing) {
+      throw new Error("Listing not found");
+    }
+    if (deletedListing.images[0]?.publicId) {
+      await deleteCloudinaryImage(deletedListing.images[0].publicId).catch(
+        (cleanupError) => {
+          console.error("Failed to delete Cloudinary image:", cleanupError);
+        },
+      );
+    }
+    return handleResponse(res, 200, "Listing deleted successfully", {
+      data: deletedListing,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  createNewListing,
+  updateListing,
+  getAllListings,
+  getUserListings,
+  deleteListing,
+};
