@@ -126,7 +126,8 @@ const updateListing = async (
       });
     }
 
-    const { title, description, tags, primaryCta, links } = req.body ?? {};
+    const { title, description, tags, primaryCta, links, approvalStatus } =
+      req.body ?? {};
 
     const imageBuffer = req.file?.buffer;
 
@@ -151,6 +152,9 @@ const updateListing = async (
           links,
           ...(uploadedImage && {
             images: [uploadedImage],
+          }),
+          ...(approvalStatus && {
+            approvalStatus,
           }),
         },
       },
@@ -205,4 +209,20 @@ const getAllListings = async (
   }
 };
 
-export { createNewListing, updateListing, getAllListings };
+const getUserListings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const owner = req.authUser?._id;
+  try {
+    const listings = await Listing_MODEL.find({ owner });
+    return handleResponse(res, 200, "User listings retrieved successfully", {
+      data: listings,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { createNewListing, updateListing, getAllListings, getUserListings };

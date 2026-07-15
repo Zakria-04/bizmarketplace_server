@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createNewListing,
   getAllListings,
+  getUserListings,
   updateListing,
 } from "../controller/listing.controller";
 import { authenticateToken } from "../middlewares/auth.middleware";
@@ -22,5 +23,6 @@ listingRouter.patch(
   updateListing,
 );
 listingRouter.get("/getAllListings", getAllListings);
+listingRouter.get("/getUserListings", authenticateToken, getUserListings);
 
 export default listingRouter;
