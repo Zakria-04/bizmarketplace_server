@@ -78,6 +78,14 @@ const listingSchema = new Schema<ListingModelType>(
         type: String,
         trim: true,
       },
+      instagram: {
+        type: String,
+        trim: true,
+      },
+      facebook: {
+        type: String,
+        trim: true,
+      },
     },
 
     primaryCta: {

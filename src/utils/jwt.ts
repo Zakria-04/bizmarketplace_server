@@ -10,12 +10,12 @@ if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
 const accessSecret = process.env.JWT_ACCESS_SECRET;
 const refreshSecret = process.env.JWT_REFRESH_SECRET;
 
-export const ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000 // 15 minutes;
+export const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 1000 // 60 minutes;
 export const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000 // 7 days;
 
 export const generateAccessToken = (payload: object) => {
   try {
-    return jwt.sign(payload, accessSecret, { expiresIn: "15m" });
+    return jwt.sign(payload, accessSecret, { expiresIn: "60m" });
   } catch (err) {
     throw err;
   }

@@ -208,7 +208,19 @@ const getAllListings = async (
   next: NextFunction,
 ) => {
   try {
-    const listings = await Listing_MODEL.find();
+    const listings = await Listing_MODEL.aggregate([
+      {
+        $match: {
+          approvalStatus: "approved",
+        },
+      },
+      {
+        $sample: {
+          size: 50,
+        },
+      },
+    ]);
+
     return handleResponse(res, 200, "Listings retrieved successfully", {
       data: listings,
     });
